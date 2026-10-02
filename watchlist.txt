@@ -1,0 +1,7 @@
+# One ticker per line. Watchlist trades get looser thresholds than the whole-market scan.
+# Foreign issuers (ASML, Tokyo Electron, ASM International) don't file Form 4s, so they can't be watched here.
+AMAT
+LRCX
+KLAC
+ONTO
+TER

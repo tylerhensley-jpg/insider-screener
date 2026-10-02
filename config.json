@@ -1,0 +1,29 @@
+{
+  "sec_user_agent": "",
+  "first_run_lookback_days": 10,
+  "flag_retention_days": 120,
+  "min_share_price": 1.0,
+
+  "market": {
+    "buy_min_value": 100000,
+    "discretionary_sell_min_value": 1000000,
+    "discretionary_sell_min_pct": 0.10,
+    "discretionary_sell_pct_min_value": 250000,
+    "plan_sell_min_pct": 0.25,
+    "plan_sell_min_value": 250000,
+    "ten_pct_owner_min_value": 1000000
+  },
+
+  "watchlist": {
+    "buy_min_value": 0,
+    "discretionary_sell_min_value": 100000,
+    "plan_sell_min_pct": 0.20,
+    "plan_sell_min_value": 100000
+  },
+
+  "track_record": {
+    "history_years": 10,
+    "max_filings_per_owner": 400,
+    "episode_gap_days": 30
+  }
+}

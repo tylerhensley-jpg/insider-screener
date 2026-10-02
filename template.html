@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Insider Moves</title>
+<style>
+:root {
+  color-scheme: light;
+  --bg: #fcfcfb;
+  --card: #ffffff;
+  --line: #e6e5e0;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --ink-3: #7a7974;
+  --buy: #2a78d6;
+  --sell: #e34948;
+  --price: #8f8e88;
+  --chip: #f0efec;
+  --s: 13px; --m: 15px; --l: 22px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #141413; --card: #1a1a19; --line: #2e2e2b;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8f8e88;
+    --buy: #3987e5; --sell: #e66767; --price: #6f6e69; --chip: #2a2a27;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #141413; --card: #1a1a19; --line: #2e2e2b;
+  --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #8f8e88;
+  --buy: #3987e5; --sell: #e66767; --price: #6f6e69; --chip: #2a2a27;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: var(--m)/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif; }
+main { max-width: 920px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: var(--l); margin: 0 0 4px; letter-spacing: -0.01em; }
+.sub { color: var(--ink-2); font-size: var(--s); margin: 0 0 20px; }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 16px; position: sticky; top: 0; background: var(--bg); padding: 8px 0; z-index: 2; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: inherit; font-size: var(--s); border: 0; background: var(--card); color: var(--ink-2); padding: 6px 10px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+input[type=search] { font: inherit; font-size: var(--s); padding: 6px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); width: 150px; }
+.count { color: var(--ink-3); font-size: var(--s); margin-left: auto; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+.top { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: baseline; }
+.side { font-size: var(--s); font-weight: 600; letter-spacing: 0.04em; display: inline-flex; gap: 4px; align-items: center; }
+.side .glyph { font-size: var(--s); }
+.side.buy .glyph { color: var(--buy); }
+.side.sell .glyph { color: var(--sell); }
+.tkr { font-weight: 700; }
+.co { color: var(--ink-2); }
+.chip { font-size: var(--s); background: var(--chip); color: var(--ink-2); border-radius: 999px; padding: 1px 8px; }
+.who { margin-top: 2px; color: var(--ink-2); }
+.nums { display: flex; flex-wrap: wrap; gap: 8px 28px; margin: 12px 0 8px; }
+.nums div { display: flex; flex-direction: column; }
+.nums b { font-size: var(--l); font-weight: 650; letter-spacing: -0.01em; }
+.nums span { font-size: var(--s); color: var(--ink-3); }
+.record { font-size: var(--s); color: var(--ink-2); border-top: 1px solid var(--line); padding-top: 8px; margin-top: 8px; }
+.record p { margin: 2px 0; }
+.actions { display: flex; gap: 16px; margin-top: 8px; font-size: var(--s); }
+.actions a, .actions button { color: var(--ink-2); background: none; border: 0; padding: 0; font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.detail { margin-top: 12px; }
+.chartwrap { position: relative; }
+svg.chart { width: 100%; height: auto; display: block; touch-action: pan-y; }
+svg.chart text { font-size: 11px; fill: var(--ink-3); }
+.tip { position: absolute; pointer-events: none; background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; font-size: var(--s); box-shadow: 0 2px 8px rgba(0,0,0,.08); white-space: nowrap; display: none; }
+.tip b { color: var(--ink); }
+.tip div { color: var(--ink-2); }
+.legend { display: flex; gap: 16px; font-size: var(--s); color: var(--ink-2); margin: 4px 0 8px; flex-wrap: wrap; }
+.legend i { font-style: normal; }
+.k-buy { color: var(--buy); } .k-sell { color: var(--sell); } .k-price { color: var(--price); }
+table { width: 100%; border-collapse: collapse; font-size: var(--s); margin-top: 8px; }
+th, td { text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+th:first-child, td:first-child, th:nth-child(2), td:nth-child(2) { text-align: left; }
+th { color: var(--ink-3); font-weight: 500; }
+.tablewrap { overflow-x: auto; }
+.empty { color: var(--ink-2); text-align: center; padding: 40px 0; }
+.foot { color: var(--ink-3); font-size: var(--s); margin-top: 32px; }
+.foot p { margin: 4px 0; }
+@media (max-width: 560px) { .count { margin-left: 0; width: 100%; } .nums { gap: 8px 20px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Insider Moves</h1>
+  <p class="sub" id="sub"></p>
+  <div class="filters" role="toolbar" aria-label="Filters">
+    <div class="seg" data-key="scope"><button data-v="watch">Watchlist</button><button data-v="all">All</button></div>
+    <div class="seg" data-key="side"><button data-v="both">Both</button><button data-v="buy">Buys</button><button data-v="sell">Sells</button></div>
+    <div class="seg" data-key="days"><button data-v="7">7d</button><button data-v="30">30d</button><button data-v="120">120d</button></div>
+    <div class="seg" data-key="sort"><button data-v="score">Top</button><button data-v="new">Newest</button></div>
+    <input type="search" id="q" placeholder="Ticker or name" aria-label="Search ticker or name">
+    <span class="count" id="count"></span>
+  </div>
+  <div id="list"></div>
+  <div class="foot">
+    <p>Source: SEC Form 4 filings (open-market purchases, code P, and sales, code S). Planned 10b5-1 sales appear only when they cut a large share of the insider's holdings. Grants, option exercises, tax withholding and gifts are excluded.</p>
+    <p>Timing record: for each earlier buy or discretionary sale (trades within 30 days merged into one), the stock's return over the next 6 months versus the S&amp;P 500 (SPY). A buy counts as well timed if the stock beat SPY; a sale, if it trailed. Range position is where the price sat between its 52-week low (0%) and high (100%). Holdings counts exclude unvested options.</p>
+  </div>
+</main>
+<script>
+const DATA = /*__DATA__*/null;
+const $ = (s, el = document) => el.querySelector(s);
+const state = { scope: "all", side: "both", days: "30", sort: "score", q: "" };
+try { Object.assign(state, JSON.parse(localStorage.getItem("im-filters") || "{}")); } catch (e) {}
+
+const usd = v => v >= 1e9 ? "$" + (v / 1e9).toFixed(1) + "B" : v >= 1e6 ? "$" + (v / 1e6).toFixed(1) + "M" : v >= 1e3 ? "$" + Math.round(v / 1e3) + "K" : "$" + Math.round(v);
+const pct = (v, signed) => v == null ? "n/a" : (signed && v > 0 ? "+" : "") + Math.round(v * 100) + "%";
+const px = v => v == null ? "n/a" : "$" + (v >= 100 ? v.toFixed(0) : v.toFixed(2));
+const fmtDate = s => s ? new Date(s + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
+
+function daysAgo(iso) { return (Date.now() - new Date(iso + "T12:00:00")) / 864e5; }
+
+function recordLines(rec) {
+  if (!rec) return ["Timing record still loading for this insider."];
+  const out = [];
+  const b = rec.buys, s = rec.sells;
+  if (b) out.push(`${b.n} earlier buy${b.n > 1 ? "s" : ""}: the stock beat the S&P over the next 6 months after ${b.hits} of ${b.n} (avg ${pct(b.avg_m6_x, true)} vs S&P, ${pct(b.avg_m6, true)} outright). Bought at ${pct(b.avg_range_pos)} of the 52-week range on average.`);
+  if (s) out.push(`${s.n} earlier sale${s.n > 1 ? "s" : ""} by choice: the stock trailed the S&P over the next 6 months after ${s.hits} of ${s.n} (avg ${pct(s.avg_m6_x, true)} vs S&P). Sold at ${pct(s.avg_range_pos)} of the 52-week range on average.`);
+  const extra = [];
+  if (rec.plan_sells) extra.push(`${rec.plan_sells} planned 10b5-1 sale${rec.plan_sells > 1 ? "s" : ""} not scored`);
+  if (rec.pending) extra.push(`${rec.pending} too recent to score`);
+  if (!b && !s) out.push("No earlier open-market trades old enough to score.");
+  if (extra.length) out.push(extra.join("; ") + ".");
+  return out;
+}
+
+function contextText(f) {
+  const c = f.ctx;
+  if (!c || c.range_pos == null) return null;
+  if (f.side === "buy") return c.off_high <= -0.15 ? `${pct(-c.off_high)} below 52-wk high` : `${pct(c.range_pos)} of 52-wk range`;
+  return `${pct(c.range_pos)} of 52-wk range`;
+}
+
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  let rows = DATA.flags.filter(f =>
+    (state.scope === "all" || f.watch) &&
+    (state.side === "both" || f.side === state.side) &&
+    daysAgo(f.filed) <= +state.days + 1 &&
+    (!q || f.ticker.toLowerCase().includes(q) || f.owner.toLowerCase().includes(q) || f.issuer.toLowerCase().includes(q)));
+  rows.sort(state.sort === "score" ? (a, b) => b.score - a.score : (a, b) => b.filed.localeCompare(a.filed) || b.score - a.score);
+  return rows;
+}
+
+function card(f) {
+  const c = el("article", "card");
+  const top = el("div", "top");
+  const side = el("span", "side " + f.side);
+  side.append(el("span", "glyph", f.side === "buy" ? "▲" : "▼"), document.createTextNode(f.side === "buy" ? "BUY" : "SELL"));
+  top.append(side, el("span", "tkr", f.ticker || "n/a"), el("span", "co", f.issuer));
+  if (f.watch) top.append(el("span", "chip", "Watchlist"));
+  if (f.cluster) top.append(el("span", "chip", `${f.cluster} insiders buying`));
+  top.append(el("span", "chip", f.side === "sell" ? (f.plan ? "Planned 10b5-1" : "Discretionary") : "Open market"));
+  if (f.price_est) top.append(el("span", "chip", `Filed price $${f.filed_price} looked like a typo; valued at the close`));
+  c.append(top);
+  c.append(el("div", "who", `${f.owner} · ${f.role}`));
+
+  const nums = el("div", "nums");
+  const add = (big, small) => { const d = el("div"); d.append(el("b", null, big), el("span", null, small)); nums.append(d); };
+  add(usd(f.value), `${f.shares.toLocaleString()} sh @ ${px(f.price)}`);
+  if (f.pct != null) {
+    if (f.side === "buy" && f.pct >= 1) add(f.pct >= 10 ? "New" : (1 + f.pct).toFixed(1) + "x", f.pct >= 10 ? "position (little held before)" : "stake size after buying");
+    else add(pct(f.pct), f.side === "sell" ? "of holdings sold" : "added to stake");
+  }
+  const ctx = contextText(f);
+  if (ctx) add(ctx.split(" ")[0], ctx.split(" ").slice(1).join(" "));
+  add(fmtDate(f.last).replace(/, \d{4}$/, ""), f.first !== f.last ? `traded from ${fmtDate(f.first)}` : `filed ${fmtDate(f.filed)}`);
+  c.append(nums);
+
+  const rec = el("div", "record");
+  const owner = DATA.owners[f.owner_cik];
+  recordLines(owner && owner.record).forEach(t => rec.append(el("p", null, t)));
+  c.append(rec);
+
+  const actions = el("div", "actions");
+  const btn = el("button", null, "Chart and trade history");
+  btn.setAttribute("aria-expanded", "false");
+  const a = el("a", null, "SEC filing ↗"); a.href = f.url; a.target = "_blank"; a.rel = "noopener";
+  actions.append(btn, a);
+  c.append(actions);
+  const detail = el("div", "detail"); detail.hidden = true; c.append(detail);
+  btn.onclick = () => {
+    const open = detail.hidden;
+    detail.hidden = !open;
+    btn.setAttribute("aria-expanded", String(open));
+    if (open && !detail.dataset.built) { detail.dataset.built = "1"; buildDetail(detail, f, owner); }
+  };
+  return c;
+}
+
+function render() {
+  document.querySelectorAll(".seg").forEach(seg => seg.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(state[seg.dataset.key] === b.dataset.v))));
+  const rows = filtered();
+  const list = $("#list"); list.replaceChildren();
+  $("#count").textContent = `${rows.length} trade${rows.length === 1 ? "" : "s"}`;
+  if (!rows.length) {
+    list.append(el("p", "empty", state.scope === "watch" ? "No qualifying trades on your watchlist in this window. Try All." : "No qualifying trades in this window."));
+    return;
+  }
+  rows.slice(0, 200).forEach(f => list.append(card(f)));
+  try { localStorage.setItem("im-filters", JSON.stringify({ scope: state.scope, side: state.side, days: state.days, sort: state.sort })); } catch (e) {}
+}
+
+// ---------- detail: price chart with this insider's trades + history table
+const NS = "http://www.w3.org/2000/svg";
+const svgEl = (tag, attrs) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); return e; };
+
+async function buildDetail(box, f, owner) {
+  const eps = owner ? owner.episodes : [];
+  const here = eps.filter(e => e.issuer_cik === f.issuer_cik);
+  const ticker = DATA.ticker_for[f.issuer_cik] || f.ticker;
+  const legend = el("div", "legend");
+  const key = (glyph, cls, label) => { const i = el("i"); i.append(el("span", cls, glyph), document.createTextNode(" " + label)); return i; };
+  legend.append(key("▲", "k-buy", "buy"), key("▼", "k-sell", "sale by choice"), key("▽", "k-sell", "planned 10b5-1 sale"), key("━", "k-price", `${ticker} weekly close`));
+  const wrap = el("div", "chartwrap");
+  box.append(legend, wrap);
+  let series = [];
+  try { series = await (await fetch(`prices/${ticker}.json`)).json(); } catch (e) {}
+  if (series.length > 1) drawChart(wrap, series, here, f); else wrap.append(el("p", "sub", "No price history available for this ticker."));
+  box.append(historyTable(eps, f));
+}
+
+function drawChart(wrap, series, eps, f) {
+  const W = 860, H = 260, L = 48, R = 24, T = 18, B = 26;
+  const firstTrade = eps.length ? eps.map(e => e.first).sort()[0] : f.first;
+  const startIso = [series[0][0], firstTrade < series[0][0] ? series[0][0] : shiftYears(firstTrade, -1)].sort()[1];
+  const pts = series.filter(p => p[0] >= startIso);
+  const t0 = +new Date(pts[0][0]), t1 = +new Date(pts[pts.length - 1][0]);
+  const vals = pts.map(p => p[1]);
+  let lo = Math.min(...vals), hi = Math.max(...vals); const pad = (hi - lo) * 0.08; lo = Math.max(0, lo - pad); hi += pad;
+  const x = d => L + (W - L - R) * (+new Date(d) - t0) / (t1 - t0 || 1);
+  const y = v => T + (H - T - B) * (1 - (v - lo) / (hi - lo || 1));
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "chart", role: "img", "aria-label": `${f.ticker} price with ${f.owner}'s trades` });
+
+  niceTicks(lo, hi, 4).forEach(v => {
+    svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), stroke: "var(--line)", "stroke-width": 1 }));
+    const t = svgEl("text", { x: L - 6, y: y(v) + 4, "text-anchor": "end" }); t.textContent = px(v); svg.append(t);
+  });
+  const y0 = new Date(pts[0][0]).getFullYear(), y1 = new Date(pts[pts.length - 1][0]).getFullYear();
+  const step = Math.max(1, Math.ceil((y1 - y0) / 6));
+  for (let yr = y0 + 1; yr <= y1; yr += step) {
+    const t = svgEl("text", { x: x(`${yr}-01-01`), y: H - 8, "text-anchor": "middle" }); t.textContent = yr; svg.append(t);
+  }
+  svg.append(svgEl("path", { d: pts.map((p, i) => (i ? "L" : "M") + x(p[0]).toFixed(1) + " " + y(p[1]).toFixed(1)).join(""), fill: "none", stroke: "var(--price)", "stroke-width": 2, "stroke-linejoin": "round" }));
+
+  const hair = svgEl("line", { y1: T, y2: H - B, stroke: "var(--ink-3)", "stroke-width": 1, visibility: "hidden" });
+  const dot = svgEl("circle", { r: 4, fill: "var(--price)", stroke: "var(--card)", "stroke-width": 2, visibility: "hidden" });
+  svg.append(hair, dot);
+
+  const nearestIdx = iso => { let best = 0; for (let i = 0; i < pts.length; i++) if (Math.abs(+new Date(pts[i][0]) - +new Date(iso)) < Math.abs(+new Date(pts[best][0]) - +new Date(iso))) best = i; return best; };
+  const marks = [];
+  eps.filter(e => e.first >= startIso).forEach(e => {
+    const i = nearestIdx(e.first), cx = x(pts[i][0]), cy = y(pts[i][1]);
+    const isCur = e.accs.includes(f.acc);
+    const s = isCur ? 9 : 7;
+    const d = e.side === "buy" ? `M${cx} ${cy - s} L${cx + s} ${cy + s * 0.8} L${cx - s} ${cy + s * 0.8}Z` : `M${cx} ${cy + s} L${cx + s} ${cy - s * 0.8} L${cx - s} ${cy - s * 0.8}Z`;
+    const color = e.side === "buy" ? "var(--buy)" : "var(--sell)";
+    const g = svgEl("g", { tabindex: 0, role: "img", "aria-label": epLabel(e) });
+    g.append(svgEl("path", { d, fill: e.plan ? "var(--card)" : color, stroke: e.plan ? color : "var(--card)", "stroke-width": 2 }));
+    g.append(svgEl("circle", { cx, cy, r: 14, fill: "transparent" }));
+    if (isCur) g.append(svgEl("circle", { cx, cy, r: 15, fill: "none", stroke: color, "stroke-width": 1 }));
+    g.addEventListener("focus", () => showTip(cx, cy, [epLabel(e)], e));
+    g.addEventListener("blur", hideTip);
+    svg.append(g);
+    marks.push({ cx, cy, e });
+  });
+
+  const tip = el("div", "tip");
+  wrap.append(svg, tip);
+  function showTip(cx, cy, _, e, p) {
+    tip.replaceChildren();
+    if (p) { tip.append(el("b", null, px(p[1]))); tip.append(el("div", null, fmtDate(p[0]))); }
+    if (e) {
+      tip.append(el("b", null, `${e.side === "buy" ? "▲ Bought" : "▼ Sold"} ${usd(e.value)} @ ${px(e.price)}`));
+      tip.append(el("div", null, `${fmtDate(e.first)}${e.last !== e.first ? " to " + fmtDate(e.last) : ""}${e.plan ? " · planned 10b5-1" : ""}`));
+      if (e.fwd && e.fwd.m6 != null) tip.append(el("div", null, `Next 6 mo: ${pct(e.fwd.m6, true)} (${pct(e.fwd.m6_x, true)} vs S&P)`));
+    }
+    tip.style.display = "block";
+    const box = svg.getBoundingClientRect(), k = box.width / W;
+    let left = cx * k + 12; if (left + tip.offsetWidth > box.width) left = cx * k - tip.offsetWidth - 12;
+    tip.style.left = left + "px"; tip.style.top = Math.max(0, cy * k - tip.offsetHeight - 10) + "px";
+  }
+  function hideTip() { tip.style.display = "none"; hair.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); }
+  svg.addEventListener("pointermove", ev => {
+    const box = svg.getBoundingClientRect(), k = box.width / W;
+    const mx = (ev.clientX - box.left) / k, my = (ev.clientY - box.top) / k;
+    const near = marks.find(m => Math.hypot(m.cx - mx, m.cy - my) < 16);
+    const tms = t0 + (t1 - t0) * (mx - L) / (W - L - R);
+    let i = 0; for (let j = 0; j < pts.length; j++) if (Math.abs(+new Date(pts[j][0]) - tms) < Math.abs(+new Date(pts[i][0]) - tms)) i = j;
+    const cx = x(pts[i][0]), cy = y(pts[i][1]);
+    hair.setAttribute("x1", cx); hair.setAttribute("x2", cx); hair.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", cx); dot.setAttribute("cy", cy); dot.setAttribute("visibility", "visible");
+    showTip(near ? near.cx : cx, near ? near.cy : cy, null, near && near.e, near ? null : pts[i]);
+  });
+  svg.addEventListener("pointerleave", hideTip);
+}
+
+function epLabel(e) { return `${e.side === "buy" ? "Bought" : "Sold"} ${usd(e.value)} at ${px(e.price)} on ${fmtDate(e.first)}${e.plan ? ", planned 10b5-1 sale" : ""}`; }
+function shiftYears(iso, n) { const d = new Date(iso + "T12:00:00"); d.setFullYear(d.getFullYear() + n); return d.toISOString().slice(0, 10); }
+function niceTicks(lo, hi, n) {
+  const raw = (hi - lo) / n, mag = Math.pow(10, Math.floor(Math.log10(raw))), step = [1, 2, 2.5, 5, 10].map(s => s * mag).find(s => s >= raw);
+  const out = []; for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) out.push(v); return out;
+}
+
+function historyTable(eps, f) {
+  const wrap = el("div", "tablewrap");
+  if (!eps.length) { wrap.append(el("p", "sub", "No other open-market trades on file.")); return wrap; }
+  const multi = new Set(eps.map(e => e.issuer_cik)).size > 1;
+  const t = el("table");
+  const head = el("tr");
+  ["Dates", "Trade", "Value", "Price", "Stake change", "52-wk range", "6 mo", "vs S&P", "12 mo"].forEach(h => head.append(el("th", null, h)));
+  t.append(head);
+  eps.slice().reverse().forEach(e => {
+    const tr = el("tr");
+    const dates = fmtDate(e.first) + (e.last !== e.first ? " to " + fmtDate(e.last) : "");
+    const kind = (e.side === "buy" ? "▲ Buy" : e.plan ? "▽ Planned sale" : "▼ Sale") + (multi ? ` ${e.ticker}` : "");
+    [dates, kind, usd(e.value), px(e.price), e.pct == null ? "n/a" : (e.side === "buy" ? "+" : "-") + pct(e.pct), e.ctx ? pct(e.ctx.range_pos) : "n/a",
+     e.fwd.m6 != null ? pct(e.fwd.m6, true) : "pending", e.fwd.m6_x != null ? pct(e.fwd.m6_x, true) : "", e.fwd.m12 != null ? pct(e.fwd.m12, true) : ""]
+      .forEach(v => tr.append(el("td", null, v)));
+    if (e.accs.includes(f.acc)) tr.style.fontWeight = "600";
+    t.append(tr);
+  });
+  wrap.append(t);
+  return wrap;
+}
+
+// ---------- boot
+$("#sub").textContent = `Open-market buys and sales by choice from SEC Form 4s. Filings through ${fmtDate(DATA.through)}. Watchlist: ${DATA.watchlist.join(", ")}.`;
+document.querySelectorAll(".seg").forEach(seg => seg.addEventListener("click", ev => {
+  const b = ev.target.closest("button"); if (!b) return;
+  state[seg.dataset.key] = b.dataset.v; render();
+}));
+$("#q").addEventListener("input", ev => { state.q = ev.target.value; render(); });
+render();
+</script>
+</body>
+</html>

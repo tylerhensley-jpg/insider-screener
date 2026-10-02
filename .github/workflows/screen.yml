@@ -1,0 +1,53 @@
+name: screen
+
+on:
+  schedule:
+    - cron: "15 11 * * 2-6"   # 7:15am ET Tue-Sat: the prior business day's filings
+  workflow_dispatch:
+    inputs:
+      since:
+        description: "Backfill from this date (YYYY-MM-DD). Leave blank to continue from the last run."
+        required: false
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: screen
+  cancel-in-progress: false
+
+jobs:
+  screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Screen Form 4 filings
+        env:
+          SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          DIGEST_TO: ${{ secrets.DIGEST_TO }}
+          PAGE_URL: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/
+        run: python screener.py ${{ inputs.since }}
+      - name: Save data
+        run: |
+          git config user.name "insider-screener"
+          git config user.email "actions@users.noreply.github.com"
+          git add data site
+          git commit -m "Screen run $(date -u +%F)" || echo "no changes"
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deploy
+        uses: actions/deploy-pages@v4
