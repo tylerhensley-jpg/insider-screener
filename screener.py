@@ -489,7 +489,7 @@ def qualifies(move, f4, watch):
 
 def sanity_check_price(mv):
     """Filers sometimes type a total or a typo into the per-share price. If the filed price
-    is >50x off that day's close, re-price and mark it. Smaller gaps are usually real:
+    is >50x above that day's close, re-price and mark it (typos add digits, so take the lower). Smaller gaps are usually real:
     ADRs (one ADR = several ordinary shares), share classes, or a foreign currency."""
     series = prices(mv["ticker"])
     i = _index_on_or_after(series, mv["first"]) if series and mv["first"] else None
@@ -499,8 +499,8 @@ def sanity_check_price(mv):
     if close <= 0:
         return True
     ratio = mv["price"] / close
-    if 1 / 50 <= ratio <= 50:
-        return True
+    if 1 / 50 <= ratio <= 50 or ratio < 1:
+        return True  # a far-too-low filed price is usually a share-class mismatch (BRK.A vs B); keep it
     mv["filed_price"] = mv["price"]
     per_share = mv["price"] / mv["shares"] if mv["shares"] else 0
     if 1 / 3 <= per_share / close <= 3:
