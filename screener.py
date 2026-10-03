@@ -489,7 +489,8 @@ def qualifies(move, f4, watch):
 
 def sanity_check_price(mv):
     """Filers sometimes type a total or a typo into the per-share price. If the filed price
-    is >3x off that day's close, re-price at the close and mark it. Returns False to drop."""
+    is >50x off that day's close, re-price and mark it. Smaller gaps are usually real:
+    ADRs (one ADR = several ordinary shares), share classes, or a foreign currency."""
     series = prices(mv["ticker"])
     i = _index_on_or_after(series, mv["first"]) if series and mv["first"] else None
     if i is None:
@@ -498,7 +499,7 @@ def sanity_check_price(mv):
     if close <= 0:
         return True
     ratio = mv["price"] / close
-    if 1 / 3 <= ratio <= 3:
+    if 1 / 50 <= ratio <= 50:
         return True
     mv["filed_price"] = mv["price"]
     per_share = mv["price"] / mv["shares"] if mv["shares"] else 0
@@ -519,6 +520,7 @@ def score(flag):
     s += min(flag["pct"] or 0, 1) * 3
     s += 1.5 if flag["watch"] else 0
     s += 1.0 if flag.get("cluster") else 0
+    s -= 3.0 if flag.get("program") else 0
     ctx = flag.get("ctx") or {}
     if flag["side"] == "buy" and (ctx.get("off_high") or 0) <= -0.30:
         s += 1.0
@@ -597,10 +599,16 @@ def main():
     for f in flags:
         if f["side"] == "buy":
             by_issuer.setdefault(f["issuer_cik"], []).append(f)
+    program = {}
+    for f in flags:
+        if f["side"] == "buy":
+            program.setdefault((f["issuer_cik"], f["first"], round(f["price"], 2)), set()).add(f["owner_cik"])
     for f in flags:
         peers = by_issuer.get(f["issuer_cik"], []) if f["side"] == "buy" else []
         near = {p["owner_cik"] for p in peers if abs((date.fromisoformat(p["filed"]) - date.fromisoformat(f["filed"])).days) <= 14}
-        f["cluster"] = len(near) if len(near) >= 2 else 0
+        same_day = len(program.get((f["issuer_cik"], f["first"], round(f["price"], 2)), ())) if f["side"] == "buy" else 0
+        f["program"] = same_day if same_day >= 5 else 0  # many insiders, same day, same price: a company plan
+        f["cluster"] = len(near) if len(near) >= 2 and not f["program"] else 0
         f["score"] = score(f)
 
     # Timing record for every insider still on the page.

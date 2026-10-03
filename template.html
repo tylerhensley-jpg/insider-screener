@@ -157,6 +157,7 @@ function card(f) {
   top.append(side, el("span", "tkr", f.ticker || "n/a"), el("span", "co", f.issuer));
   if (f.watch) top.append(el("span", "chip", "Watchlist"));
   if (f.cluster) top.append(el("span", "chip", `${f.cluster} insiders buying`));
+  if (f.program) top.append(el("span", "chip", `Likely company program: ${f.program} insiders, same day and price`));
   top.append(el("span", "chip", f.side === "sell" ? (f.plan ? "Planned 10b5-1" : "Discretionary") : "Open market"));
   if (f.price_est) top.append(el("span", "chip", `Filed price $${f.filed_price} looked like a typo; valued at the close`));
   c.append(top);
